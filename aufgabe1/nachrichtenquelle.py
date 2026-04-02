@@ -10,7 +10,6 @@ class Nachrichtenquelle:
     def __init__(self, wort: str):
         self.wort = wort.lower()
         self.length = len(self.wort)
-
         self.char_counts = Counter(self.wort)
 
         self.probabilities = {}
@@ -26,6 +25,14 @@ class Nachrichtenquelle:
             p = self.probabilities[char]
             i = self.information_content[char]
             self.entropy += p * i
+
+
+    def get_sorted_list(self) -> list[tuple[chr, int]]:
+        return sorted(
+        self.char_counts.items(),
+        key=lambda x: x[1],
+        reverse=True
+    )
 
     def print_results(self):
         print(f"Wort: {self.wort}")
@@ -46,16 +53,16 @@ class Nachrichtenquelle:
     def get_probability(self,tupel):
         return tupel[1]
 
+    def get_sorted_prob_list(self, reverseList:bool) -> list[tuple[str, float]] :
+        return sorted(
+        [(char, prob) for char, prob in self.probabilities.items()],
+        key=self.get_probability,
+        reverse=reverseList
+        )
+
 
     def plot_results(self):
-
-        sorted_chars = []
-        for char in self.probabilities:
-            prob = self.probabilities[char]
-            sorted_chars.append((char, prob))
-
-        sorted_chars.sort(key=self.get_probability, reverse=True)
-
+        sorted_chars = self.get_sorted_prob_list(True)
         chars = []
         probs = []
         infos = []
@@ -68,7 +75,6 @@ class Nachrichtenquelle:
             chars.append(char)
             probs.append(prob)
             infos.append(info)
-
         plt.figure()
         sns.barplot(x=chars, y=probs)
         plt.xlabel("Zeichen")
@@ -83,6 +89,7 @@ class Nachrichtenquelle:
 
         plt.show()
 
+
 if __name__ == "__main__":
     test_wort = "Hochschule"
     quelle1 = Nachrichtenquelle(test_wort)
@@ -90,10 +97,20 @@ if __name__ == "__main__":
 
     with open("rfc2324.txt", "r", encoding="utf-8") as file:
         text = file.read()
-    cleaned_text = ""
-    for char in text:
-        if char.isprintable() and char not in ("\n", " "):
-            cleaned_text += char
-    quelle2 = Nachrichtenquelle(cleaned_text)
-    quelle2.plot_results()
+    quelle2 = Nachrichtenquelle(text)
+    prob_list = quelle2.get_sorted_prob_list(False)
+    total_prob = 0
+    for entry in prob_list:
+        total_prob += entry[1]
+    print(total_prob)
+
+    sum = 0
+    half_prob = total_prob / 2
+    for char, prob in total_prob:
+
+        if sum >= half_prob:
+
+    sum += prob
+
+
 
