@@ -5,6 +5,9 @@ matplotlib.use('TkAgg')
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+from shannon_Fano import ShannonFano
+from huffmann import Huffman
+#import shannon_fano as shannon_fano
 
 class Nachrichtenquelle:
     def __init__(self, wort: str):
@@ -13,21 +16,22 @@ class Nachrichtenquelle:
         self.char_counts = Counter(self.wort)
 
         self.probabilities = {}
+        self.information_content = {}
+        self.entropy = 0
+        self.shannon_fano_codes = {}
         for char, count in self.char_counts.items():
             self.probabilities[char] = count / self.length
-
-        self.information_content = {}
+        
         for char, prob in self.probabilities.items():
             self.information_content[char] = -log2(prob)
 
-        self.entropy = 0
         for char in self.probabilities:
             p = self.probabilities[char]
             i = self.information_content[char]
             self.entropy += p * i
 
 
-    def get_sorted_list(self) -> list[tuple[chr, int]]:
+    def get_sorted_list(self) -> list[tuple[str, int]]:
         return sorted(
         self.char_counts.items(),
         key=lambda x: x[1],
@@ -90,54 +94,29 @@ class Nachrichtenquelle:
 
         plt.show()
 
-
-def shannon_fano(symbol_list):
-    if len(symbol_list) <= 1:
-        return
-    total = 0
-    for entry in symbol_list:
-        total += entry[1]
-
-    sum = 0
-
-    index = 0
-    for i in range(len(symbol_list)):
-        sum += symbol_list[i][1]
-        if sum >= total / 2:
-            index = i + 1
-            break
-
-    left = symbol_list[:index]
-    right = symbol_list[index:]
-
-    for item in left:
-        item[2] += "0"
-    for item in right:
-        item[2] += "1"
-
-    shannon_fano(left)
-    shannon_fano(right)
-
-
 if __name__ == "__main__":
     test_wort = "Hochschule"
     quelle1 = Nachrichtenquelle(test_wort)
-    quelle1.print_results()
+    #quelle1.print_results()
 
     with open("rfc2324.txt", "r", encoding="utf-8") as file:
         text = file.read()
     quelle2 = Nachrichtenquelle(text)
+    shannon = False
+    
+    encoder = ShannonFano(quelle2)
 
-    #Test mit Stuff aus Vorlesung
-    quelle3 = Nachrichtenquelle("HOCHSCHULE")
-    prob_list = quelle3.get_sorted_prob_list(True)
+    
+    encoding = encoder.encoding()
+    encoded_string, avg_char_length, redundency = encoder.encode(text.lower())
+    print(f"average char length: {avg_char_length}")
+    print(f"redundency:{redundency}")
+    #print("encoded: " + encoded_string)
+    
+    decoded_string = encoder.decode(encoded_string)
+    print(f"encoded length: {len(encoded_string)}")
+    print(f"decoded length: {len(decoded_string)}")
 
-    symbol_list = []
-    for char, prob in prob_list:
-        symbol_list.append([char, prob, ""])
-
-    shannon_fano(symbol_list)
-    print(symbol_list)
 
 
 
