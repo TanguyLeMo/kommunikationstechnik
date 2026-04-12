@@ -100,15 +100,13 @@ if __name__ == "__main__":
     #quelle1.print_results()
 
     with open("rfc2324.txt", "r", encoding="utf-8") as file:
-        text = file.read()
-    quelle2 = Nachrichtenquelle(text)
-    shannon = False
-    
-    encoder = ShannonFano(quelle2)
+        text = file.read()    
 
-    
+
+    quelle2 = Nachrichtenquelle("hochschule")
+    encoder = Huffman(quelle2)
     encoding = encoder.encoding()
-    encoded_string, avg_char_length, redundency = encoder.encode(text.lower())
+    encoded_string, avg_char_length, redundency = encoder.encode("hhhh")
     print(f"average char length: {avg_char_length}")
     print(f"redundency:{redundency}")
     #print("encoded: " + encoded_string)
