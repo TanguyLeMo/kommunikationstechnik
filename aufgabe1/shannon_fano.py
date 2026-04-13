@@ -1,7 +1,7 @@
-import Nachrichtenquelle
+#import Nachrichtenquelle
 class shannon_fano:
-    def __init__(self, narichtenquelle: Nachrichtenquelle):
-        self.source:Nachrichtenquelle = narichtenquelle
+    def __init__(self, narichtenquelle):
+        self.source = narichtenquelle
         self.symbol_list = []
         for char, count in self.source.get_sorted_list():
             self.symbol_list.append([char, count, ""])
@@ -33,7 +33,7 @@ class shannon_fano:
             if running_sum >= half:
                 index = i + 1
                 break
-        
+
         #divide both halfs
         left = symbol_list[:index]
         right = symbol_list[index:]
@@ -42,25 +42,34 @@ class shannon_fano:
             item[2] += "0"
         for item in right:
             item[2] += "1"
-        
+
         self._recursive(left)
         self._recursive(right)
+
     def encoding(self):
         self._recursive(self.symbol_list)
         self.codes = {}
         for char, prob, code in self.symbol_list:
             self.codes[char] = code
         return self.codes
-    
-    def encode(self, word: str)-> str:
+
+    def encode(self, word:str):
+        if not self.codes :
+            print("hund")
+            return "hund"
         ret:str = ""
+        if len(word) == 0:
+            return
         for char in word:
             if not char in self.codes:
                 ret = "unvalid key: " + str(char)
                 break
             ret += self.codes[char]
-        return ret
-    
+        avg_char_length = len(ret) / len(word)
+        redundency = avg_char_length - self.source.entropy
+
+        return ret, avg_char_length, redundency
+
     def decode(self, encoded: str) -> str:
         ret = ""
         current_index = 0
@@ -68,10 +77,8 @@ class shannon_fano:
         inversed_map = {v: k for k, v in self.codes.items()}
         for bit in encoded:
             current_word += bit
-            print()
             if current_word in inversed_map:
                 ret += inversed_map[current_word]
-                print(ret)
                 current_word = ""
         return ret
 
