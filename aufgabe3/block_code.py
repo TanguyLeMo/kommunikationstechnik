@@ -41,7 +41,7 @@ class BlockCode:
         syndrome = (self.H @ codeword ) % 2
         syndrome_key = int(''.join([f'{b}' for b in syndrome]),2)
         if syndrome_key == 0: # passt kein Fehler
-            return codeword[:self.k]
+            return codeword[:self.k], 0
         error_code = self.S.get(syndrome_key, None)
         if error_code is None:
             print("Wallah krise")
@@ -51,49 +51,3 @@ class BlockCode:
         num_errors = int(np.sum(error_code)) #[0100] : 1 -> [1001000] : 2
         final_message = corrected[:self.k]
         return final_message, num_errors
-
-
-
-
-def main():
-    # Beispiel P-Matrix (7,4)-Code
-    P = [
-        [1, 1, 0],
-        [1, 0, 1],
-        [0, 1, 1],
-        [1, 1, 1],
-    ]
-
-    bc = BlockCode(P, 1)
-
-    # Zufällige Nachricht
-    message = np.random.randint(0, 2, bc.k)
-    print("Original message:      ", message)
-
-    # Encoding
-    codeword = bc.encode(message)
-    print("Encoded codeword:      ", codeword)
-
-    # Fehler simulieren (1 Bit flip)
-    received = codeword.copy()
-    #error_pos = np.random.randint(0, bc.n)
-    received[6] ^= 1
-    received[3] ^= 1
-
-    print(f"Error at position:     {6},{3}")
-    print("Received codeword:     ", received)
-
-    # Decoding
-    decoded, num_errors = bc.decode(received)
-
-    print("Decoded message:       ", decoded)
-    print("Corrected errors:      ", num_errors)
-
-    # Vergleich
-    if decoded is not None:
-        print("Decoding successful:   ", np.array_equal(message, decoded))
-    else:
-        print("Decoding failed (ambiguous syndrome)")
-
-if __name__ == "__main__":
-    main()

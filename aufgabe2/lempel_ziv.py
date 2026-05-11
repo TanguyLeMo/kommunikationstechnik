@@ -9,7 +9,6 @@ class Lempel_Ziv:
         self.rightnumbits = num_bit_right
         self.tupleSize = num_bit_right + num_bit_Left
         #0011110
-
     #shall be called with bitstring, charD = lempelZiv.encode(message)
 
     #10ß11001 10010
@@ -36,28 +35,31 @@ class Lempel_Ziv:
             length = 0
             next_char = ""
 
-            while length < max_length and loop_index < len(message) -1:
+            while length < max_length and loop_index + length < len(message) -1:
                 next_word = message[loop_index:loop_index + length + 1]
                 current_pos = message_window.rfind(next_word)
                 if current_pos == -1 :
                     break
                 offset = loop_index - (left_boundary_index + current_pos)
                 length += 1
+            if (loop_index + length > len(message)):
+                len_message = len(message)
+                print("achtung")
             next_char   = message[loop_index + length]
             bin_offset  = f"{offset:0{self.leftnumbits}b}"
             bin_length  = f"{length:0{self.rightnumbits}b}"
             bin_char    = self.encoding_dict[next_char]
-
+         #   print("len of word: " + str(len(bin_offset + bin_length + bin_char)))
             ret_word += bin_offset + bin_length + bin_char
-            ret_word_length = len(ret_word)
+            """ret_word_length = len(ret_word)
             if ret_word_length % 17 != 0:
                 print("error")
             if len(bin_offset) != 5 or len(bin_length) != 5 or len(bin_char) != 7:
                 print(f"adding: {len(bin_offset)}, {len(bin_length)}, {len(bin_char)} ")
             if (len(bin_char) > self.num_bits_for_encoding):
-                print(bin_char)
+                print(bin_char)"""
             current_index = current_index + length + 1
-        print(len(ret_word))
+        #print(len(ret_word))
         return ret_word, self.encoding_dict
         """
 
@@ -131,9 +133,13 @@ class Lempel_Ziv:
         ret_word = ""
         for index in range(0, len(bit_string), tuple_size):
             current_tuple = bit_string[index:index + tuple_size]
+            #offset_bits,current_tuple=current_tuple[:self.leftnumbits],current_tuple[self.leftnumbits:]
             offset_bin = current_tuple[:self.leftnumbits]
             length_bin = current_tuple[self.leftnumbits:self.leftnumbits + self.rightnumbits]
-            last_char = reversed_dict[current_tuple[self.rightnumbits+ self.rightnumbits:]]
+            try:
+                last_char = reversed_dict[current_tuple[self.leftnumbits + self.rightnumbits:]]
+            except:
+                last_char = reversed_dict[current_tuple[self.leftnumbits + self.rightnumbits:]]
 
             offset = int(offset_bin,2)
             length = int(length_bin, 2)
@@ -151,9 +157,10 @@ class Lempel_Ziv:
         self.num_bits_for_encoding = ceil(log2(len(self.char_set)))
 
 if __name__ == "__main__":
-    zivelMann = Lempel_Ziv(5,5)
-    with open("rfc2324.txt", "r", encoding="utf-8") as file:
+    zivelMann = Lempel_Ziv(15,5)
+    with open("C:\repos\kommunikationstechnik\aufgabe2\rfc2324.txt", "r", encoding="utf-8") as file:
         text = file.read()
     message, dic = zivelMann.encode(text)
     #print(message)
     print(zivelMann.decode(message, dic))
+    print(f"{len(message)}")
