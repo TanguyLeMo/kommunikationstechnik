@@ -2,7 +2,7 @@ import numpy as np
 from channels import BinarySymmetricChannel, FixedErrorChannel
 from block_code import BlockCode
 from itertools import combinations
-
+from simulation import simulate_transmission
 
 def main():
     # Beispiel P-Matrix (7,4)-Code
@@ -42,6 +42,18 @@ def main():
     else:
         print("Decoding failed")
 
+def simulation():
+
+    P2 =[
+        [1, 1, 1, 1, 0, 0, 0],
+        [0, 0, 1, 1, 1, 1, 0],
+        [1, 0, 1, 0, 1, 0, 1],
+        ]
+    block_code = BlockCode(P2, 2)
+    channel = BinarySymmetricChannel(0.2)
+    ret_dict = simulate_transmission(block_code, channel)
+    print(ret_dict)
 
 if __name__ == "__main__":
-    main()
+    #main()
+    simulation()
