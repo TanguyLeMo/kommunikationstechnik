@@ -2,8 +2,8 @@ import numpy as np
 from channels import BinarySymmetricChannel, FixedErrorChannel
 from block_code import BlockCode
 from itertools import combinations
-from simulation import simulate_transmission
-
+from simulation import simulate_transmission, simulate_many_transmissions
+from pprint import pprint
 def main():
     # Beispiel P-Matrix (7,4)-Code
     # passt für eine Fehler korrektur
@@ -42,18 +42,22 @@ def main():
     else:
         print("Decoding failed")
 
-def simulation():
+def scenario_one():
 
-    P2 =[
-        [1, 1, 1, 1, 0, 0, 0],
-        [0, 0, 1, 1, 1, 1, 0],
-        [1, 0, 1, 0, 1, 0, 1],
-        ]
-    block_code = BlockCode(P2, 2)
-    channel = BinarySymmetricChannel(0.2)
-    ret_dict = simulate_transmission(block_code, channel)
-    print(ret_dict)
+    P1 = [
+    [1, 1, 1, 1, 0, 0, 0],
+    [0, 0, 1, 1, 1, 1, 0],
+    [1, 0, 1, 0, 1, 0, 1],
+    ]
+    block_code = BlockCode(P1, 2)
+    channel = BinarySymmetricChannel(0.15)
+    dict = simulate_many_transmissions(50, block_code, channel)
+    pprint(dict)
+#    ret_dict = simulate_transmission(block_code, channel)
+    #print(ret_dict)
 
 if __name__ == "__main__":
     #main()
-    simulation()
+    scenario_one()
+
+    #todo: anschauen und verstehen von block codes, und simulation das bestimmen von corrected codewords

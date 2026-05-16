@@ -42,9 +42,10 @@ class BlockCode:
         syndrome_key = int(''.join([f'{b}' for b in syndrome]),2)
         if syndrome_key == 0: # passt kein Fehler
             return codeword[:self.k], 0
-        error_code = self.S.get(syndrome_key, None)
+        error_code = self.S .get(syndrome_key, None)
+
         if error_code is None:
-            print("Wallah krise")
+            print(" krise")
             return None, 0
         #korrigierbarer Fehler:
         corrected = (codeword  + error_code) % 2
