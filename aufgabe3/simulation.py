@@ -1,6 +1,6 @@
 import numpy as np
 from block_code import BlockCode
-from channels import BinarySymmetricChannel, FixedErrorChannel
+from channelss import BinarySymmetricChannel, FixedErrorChannel
 from collections import Counter
 #5.1
 def simulate_transmission(block_code:BlockCode, channel):
@@ -8,8 +8,8 @@ def simulate_transmission(block_code:BlockCode, channel):
     codeword = block_code.encode(message)
     received = channel(codeword)
     decoded, corrected_bits = block_code.decode(received)
-    bit_errors_before = int (np.sum(codeword != received))
-    correction_performed = decoded is not None
+    bit_errors_before = int(np.sum(codeword != received))
+    correction_performed = corrected_bits != 0
     bit_errors_after = 0
     if decoded is None:
         bit_errors_after = bit_errors_before
@@ -31,7 +31,7 @@ def simulate_transmission(block_code:BlockCode, channel):
 #5.2
 def simulate_many_transmissions(count:int, block_code:BlockCode, channel):
     result = []
-    for current_count in range(count):
+    for current_index in range(count):
         tmp = simulate_transmission(block_code, channel)
         result.append(tmp)
     error_free = 0
@@ -39,7 +39,8 @@ def simulate_many_transmissions(count:int, block_code:BlockCode, channel):
     faulty_not_corrected = 0
     successfully_corrected = 0
     wrongly_corrected = 0
-    bit_errors_before_counter = Counter()
+    not_decoded = 0
+    bit_errors_before_counter= Counter()
     corrected_bits_counter = Counter()
     bit_errors_after_counter = Counter()
 
@@ -53,6 +54,8 @@ def simulate_many_transmissions(count:int, block_code:BlockCode, channel):
         corrected_bits_counter[corrected_bits] += 1
         bit_errors_after_counter[bit_error_after] += 1
 
+        if decoded is None:
+            not_decoded += 1
         if bit_error_before == 0:
             error_free += 1
         if decoded is not None and corrected_bits >= 1:
@@ -63,7 +66,7 @@ def simulate_many_transmissions(count:int, block_code:BlockCode, channel):
             successfully_corrected += 1
         if bit_error_after > 0 and decoded is not None and bit_error_after > 0:
             wrongly_corrected += 1
-
+            
     return {
             "N": count,
     "error_free_count": error_free,
@@ -80,5 +83,6 @@ def simulate_many_transmissions(count:int, block_code:BlockCode, channel):
 
     "bit_errors_before_counter": bit_errors_before_counter,
     "corrected_bits_counter": corrected_bits_counter,
-    "bit_errors_after_counter": bit_errors_after_counter,
+    "bit_errors_after_counter": bit_errors_after_counter,    
     }
+    

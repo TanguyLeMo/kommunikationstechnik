@@ -19,33 +19,39 @@ class BlockCode:
     def _build_syndrome_table(self):
         syndrome_table = {}
         for num_errors in range(1, self.max_corr_bits + 1):
-            for error_positions in combinations(range(self.n), num_errors):
-                error_vector = np.zeros(self.n, dtype=int)
+            tmp = combinations(range(self.n), num_errors)
+            #(2,3)
+            for error_positions in tmp:
+                error_vector = np.zeros(self.n, dtype=int) #(0,0,0,0,0,0,0)
                 for pos in error_positions:
                     error_vector[pos] = 1
+
+                #error_vector = (0,0,1,1,0,0,0) -> 
                 syndrome = self.H @ error_vector % 2
                 syndrome_key = int(''.join([str(b) for b in syndrome]), 2) #[0,1,0]->2 [1,0,0]-> 4 [0,0,1]-> 1
                 if syndrome_key not in syndrome_table:
                     syndrome_table[syndrome_key] = error_vector
-                else:
+                else:   
+                    print(f"duplicate correction found for {syndrome_key}: {syndrome}")
                     syndrome_table[syndrome_key] = None
         return syndrome_table
 
-    def encode(self, message:np.array)->np.array:
+    def encode(self, message):
         if len(message) != self.k:
-            raise ValueError(f"dikkah, dein scheiß vektor hat nicht die passende länge K:{self.k}")
+            raise ValueError(f"dein vektor hat nicht die passende länge K:{self.k}")
         return message @ self.G % 2
 
 
-    def decode(self, codeword:np.array)->tuple[np.array, int]:
+    def decode(self, codeword):
         syndrome = (self.H @ codeword ) % 2
         syndrome_key = int(''.join([f'{b}' for b in syndrome]),2)
         if syndrome_key == 0: # passt kein Fehler
             return codeword[:self.k], 0
-        error_code = self.S .get(syndrome_key, None)
+        
+        error_code = self.S.get(syndrome_key, None)
 
         if error_code is None:
-            print(" krise")
+           # print("krise")
             return None, 0
         #korrigierbarer Fehler:
         corrected = (codeword  + error_code) % 2
