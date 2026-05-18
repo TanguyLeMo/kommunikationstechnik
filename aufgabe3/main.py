@@ -8,15 +8,12 @@ from collections import Counter
 import matplotlib.pyplot as plt
 
 def main():
-    # Beispiel P-Matrix (7,4)-Code
-    # passt für eine Fehler korrektur
     P1 = [
         [1, 1, 0],
         [1, 0, 1],
         [0, 1, 1],
         [1, 1, 1],
     ]
-    # Für 2 fehler matrix:
     P2 = [
     [1, 1, 1, 1, 0, 0, 0],
     [0, 0, 1, 1, 1, 1, 0],
@@ -52,12 +49,21 @@ def scenario_one():
     dict = simulate_many_transmissions(50, block_code, channel)
     x_axis_one = ["Anteil fehlerfrei übertragene Nachricht", "anteil korrigierter Nachrichten", "anteil fehlerbehafteter aber nicht korrigierter Nachrichten"]
     values_one =[dict["error_free_count"],dict["corrected_count"], dict["faulty_not_corrected_count"]]
+    plt.yticks(np.arange(
+        0,
+        max(
+            dict["error_free_count"],
+            dict["corrected_count"],
+            dict["faulty_not_corrected_count"]
+        ) + 1
+    ))
     plt.bar(x_axis_one, values_one)
     plt.title("Grafik 1")
     plt.show()
 
     x_axis_two = ["Anteil Fehlerfrei Übertragenen Nachrichten", "Anteil erfolgreich korrigierte Nachrichten", "Anteil fehlerbehafteter aber nicht korrigierter nachrichten"]
     values_two = [dict["error_free_ratio"], dict["corrected_ratio"], dict["faulty_not_corrected_ratio"]]
+
     plt.bar(x_axis_two, values_two)
     plt.title("Grafik 2")
     plt.show()
@@ -65,7 +71,7 @@ def scenario_one():
     x_axis_three = ["Verteilung der Anzahl Bitfehler vor der Korrektur", "Verteilung der Anzahl korrigierter Bits",  "Verteilung der Anzahl Bitfehler nach der Korrektur"]
     before:Counter = dict["bit_errors_before_counter"]
     corrected:Counter = dict["corrected_bits_counter"]
-    after:Counter =  dict["bit_errors_after_counter"] 
+    after:Counter =  dict["bit_errors_after_counter"]
 
     max_x = max(max(before.keys(), default= 0),max(corrected.keys(),default=0),max(after.keys(),default=0))
 
@@ -96,6 +102,15 @@ def scenario_two():
     dict = simulate_many_transmissions(50, block_code, channel)
     x_axis_one = ["Anteil fehlerfrei übertragene Nachricht", "anteil korrigierter Nachrichten", "anteil fehlerbehafteter aber nicht korrigierter Nachrichten"]
     values_one =[dict["error_free_count"],dict["corrected_count"], dict["faulty_not_corrected_count"]]
+    plt.yticks(np.arange(
+        0,
+        max(
+            dict["error_free_count"],
+            dict["corrected_count"],
+            dict["faulty_not_corrected_count"]
+        ) + 1
+    ))
+
     plt.bar(x_axis_one, values_one)
     plt.title("Grafik 1")
     plt.show()
@@ -107,7 +122,7 @@ def scenario_two():
     plt.show()
     before:Counter = dict["bit_errors_before_counter"]
     corrected:Counter = dict["corrected_bits_counter"]
-    after:Counter =  dict["bit_errors_after_counter"] 
+    after:Counter =  dict["bit_errors_after_counter"]
 
     max_x = max(max(before.keys(), default= 0),max(corrected.keys(),default=0),max(after.keys(),default=0))
 
@@ -133,14 +148,14 @@ def scenario_three():
             [1,1,1],
             [1,0,1]
             ]
-    
+
     HC114 = [
             [1,1,1,1,0,0,0],
             [0,0,1,1,1,1,0],
             [1,0,1,0,1,0,1],
             [0,1,0,1,0,1,1]
             ]
-    
+
     bc_HC74 = BlockCode(HC74, 1)
     bc_HC114 = BlockCode(HC114, 2)
     bitfeher_prob = [0.001, 0.005, 0.01, 0.02, 0.5, 0.1, 0.15, 0.2]
@@ -161,11 +176,11 @@ def scenario_three():
     x = np.arange(len(bitfeher_prob))
     width = 0.35
     plt.bar(x - width / 2,
-            rest_HC74, 
+            rest_HC74,
             width,
             label="(7,4) hamming"
             )
-    plt.bar(x + width / 2, 
+    plt.bar(x + width / 2,
             rest_HC114,
             width,
             label="(11,4) hamming"
@@ -174,7 +189,7 @@ def scenario_three():
     plt.xlabel("Bitfehlerwahrscheinlichkeit")
     plt.ylabel("Restwahrscheinlichkeit")
     plt.legend()
-    plt.show()    
+    plt.show()
 
 if __name__ == "__main__":
     #main()
