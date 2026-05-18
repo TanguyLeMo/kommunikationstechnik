@@ -44,30 +44,39 @@ def scenario_one():
     [0, 0, 1, 1, 1, 1, 0],
     [1, 0, 1, 0, 1, 0, 1],
     ]
-    block_code = BlockCode(P2, 1)
-    channel = BinarySymmetricChannel(0.05)
-    dict = simulate_many_transmissions(50, block_code, channel)
+
+    P1 = [
+        [1, 1, 0],
+        [1, 0, 1],
+        [0, 1, 1],
+        [1, 1, 1],
+    ]
+    block_code = BlockCode(P2, 2)
+    channel = BinarySymmetricChannel(0.15)
+    dict = simulate_many_transmissions(1000, block_code, channel)
     x_axis_one = ["Anteil fehlerfrei übertragene Nachricht", "anteil korrigierter Nachrichten", "anteil fehlerbehafteter aber nicht korrigierter Nachrichten"]
     values_one =[dict["error_free_count"],dict["corrected_count"], dict["faulty_not_corrected_count"]]
-    plt.yticks(np.arange(
+    fig,axL=plt.subplots(1,3,figsize=(15,5))
+    ax=axL[0]
+    ax.set_yticks(np.linspace(
         0,
         max(
             dict["error_free_count"],
             dict["corrected_count"],
             dict["faulty_not_corrected_count"]
-        ) + 1
+        ) + 1,10
     ))
-    plt.bar(x_axis_one, values_one)
-    plt.title("Grafik 1")
-    plt.show()
+    ax.bar(x_axis_one, values_one)
+    ax.set_title("Grafik 1")
 
+    ax=axL[1]
     x_axis_two = ["Anteil Fehlerfrei Übertragenen Nachrichten", "Anteil erfolgreich korrigierte Nachrichten", "Anteil fehlerbehafteter aber nicht korrigierter nachrichten"]
-    values_two = [dict["error_free_ratio"], dict["corrected_ratio"], dict["faulty_not_corrected_ratio"]]
+    values_two = [dict["error_free_ratio"], dict["successfully_corrected_ratio"], dict["wrongly_corrected_ratio"]]
 
-    plt.bar(x_axis_two, values_two)
-    plt.title("Grafik 2")
-    plt.show()
+    ax.bar(x_axis_two, values_two)
+    ax.set_title("Grafik 2")
 
+    ax=axL[2]
     x_axis_three = ["Verteilung der Anzahl Bitfehler vor der Korrektur", "Verteilung der Anzahl korrigierter Bits",  "Verteilung der Anzahl Bitfehler nach der Korrektur"]
     before:Counter = dict["bit_errors_before_counter"]
     corrected:Counter = dict["corrected_bits_counter"]
@@ -80,20 +89,20 @@ def scenario_one():
     corrected_values = [corrected[i] for i in x]
     after_values = [after[i] for i in x]
     width=0.25
-    plt.bar(x - width, before_values, width, label="anzahl bitfehler vor Korrektur")
-    plt.bar(x, corrected_values, width, label="anzahl korrigierte Bits")
-    plt.bar(x + width, after_values, width, label = "bitfehler nach korrektur")
-    plt.xticks(x)
-    plt.title("Grafik 3")
-    plt.xlabel("Anzahl Bit")
-    plt.ylabel("Anzahl Nachrichten")
-    plt.legend()
+    ax.bar(x - width, before_values, width, label="anzahl bitfehler vor Korrektur")
+    ax.bar(x, corrected_values, width, label="anzahl korrigierte Bits")
+    ax.bar(x + width, after_values, width, label = "bitfehler nach korrektur")
+    ax.set_xticks(x)
+    ax.set_title("Grafik 3")
+    ax.set_xlabel("Anzahl Bit")
+    ax.set_ylabel("Anzahl Nachrichten")
+    ax.legend()
     plt.show()
 
 
 def scenario_two():
     P2 = [
-    [1, 1, 1, 1, 0, 0, 0],
+    [1, 1, 1, 1, 0, 0, 0.],
     [0, 0, 1, 1, 1, 1, 0],
     [1, 0, 1, 0, 1, 0, 1],
     ]
@@ -135,7 +144,7 @@ def scenario_two():
     plt.bar(x, corrected_values, width, label="anzahl korrigierte Bits")
     plt.bar(x + width, after_values, width, label = "bitfehler nach korrektur")
     plt.xticks(x)
-    plt.title("Grafik 3")
+    plt.title("Grafik 3")   
     plt.xlabel("Anzahl Bit")
     plt.ylabel("Anzahl Nachrichten")
     plt.legend()
@@ -158,14 +167,14 @@ def scenario_three():
 
     bc_HC74 = BlockCode(HC74, 1)
     bc_HC114 = BlockCode(HC114, 2)
-    bitfeher_prob = [0.001, 0.005, 0.01, 0.02, 0.5, 0.1, 0.15, 0.2]
+    bitfeher_prob = [0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.4, ]
     bitfeher_prob_string = [str(bitfehler_float) for bitfehler_float in bitfeher_prob]
     rest_HC74 = []
     rest_HC114 = []
 
 
     for probabilty in bitfeher_prob:
-        channel = BinarySymmetricChannel(0.12)
+        channel = BinarySymmetricChannel(probabilty)
         simulations_stat_HC74 = simulate_many_transmissions(1000, bc_HC74, channel)
         simulations_stat_HC114 = simulate_many_transmissions(1000, bc_HC114, channel)
         rest_fehler_wahrscheinlichkeit_HC74 = (simulations_stat_HC74["faulty_not_corrected_count"] + simulations_stat_HC74["wrongly_corrected_count"] ) / simulations_stat_HC74["N"]
@@ -194,7 +203,7 @@ def scenario_three():
 if __name__ == "__main__":
     #main()
     #scenario_one()
-    scenario_two()
-    #scenario_three()
+    #scenario_two()
+    scenario_three()
 
     #todo: anschauen und verstehen von block codes, und simulation das bestimmen von corrected codewords

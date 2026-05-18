@@ -20,19 +20,17 @@ class BlockCode:
         syndrome_table = {}
         for num_errors in range(1, self.max_corr_bits + 1):
             tmp = combinations(range(self.n), num_errors)
-            #(2,3)
             for error_positions in tmp:
-                error_vector = np.zeros(self.n, dtype=int) #(0,0,0,0,0,0,0)
+                error_vector = np.zeros(self.n, dtype=int)
                 for pos in error_positions:
                     error_vector[pos] = 1
-
-                #error_vector = (0,0,1,1,0,0,0) -> 
                 syndrome = self.H @ error_vector % 2
                 syndrome_key = int(''.join([str(b) for b in syndrome]), 2) #[0,1,0]->2 [1,0,0]-> 4 [0,0,1]-> 1
                 if syndrome_key not in syndrome_table:
                     syndrome_table[syndrome_key] = error_vector
-                else:   
+                else:
                     print(f"duplicate correction found for {syndrome_key}: {syndrome}")
+                    print(f"Len of P matrix = {len(self.P[0])}")
                     syndrome_table[syndrome_key] = None
         return syndrome_table
 
@@ -47,14 +45,13 @@ class BlockCode:
         syndrome_key = int(''.join([f'{b}' for b in syndrome]),2)
         if syndrome_key == 0: # passt kein Fehler
             return codeword[:self.k], 0
-        
         error_code = self.S.get(syndrome_key, None)
 
         if error_code is None:
-           # print("krise")
+            print("krise")
             return None, 0
         #korrigierbarer Fehler:
         corrected = (codeword  + error_code) % 2
-        num_errors = int(np.sum(error_code)) #[0100] : 1 -> [1001000] : 2
+        num_errors = int(np.sum(error_code))
         final_message = corrected[:self.k]
         return final_message, num_errors
