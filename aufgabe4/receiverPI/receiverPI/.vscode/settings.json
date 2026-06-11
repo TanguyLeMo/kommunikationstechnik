@@ -1,4 +1,5 @@
 {
     "micropico.autoConnect": false,
-    "micropico.manualComDevice": "/dev/ttyACM2"
+    "micropico.manualComDevice": "/dev/ttyACM2",
+    "python.REPL.enableREPLSmartSend": false
 }

@@ -33,7 +33,7 @@ messages = [b"sie haben",b"bestimmt ein liebsten zuhause",
              ]
 
 timeout = 5  # seconds
-local_sec = 0
+local_sec = 1
 
 def receive_and_wait():
     start_time = time.time()
@@ -46,21 +46,21 @@ def receive_and_wait():
             calculated_crc = calc_crc(data[0:2], CRC16)  # Calculate CRC for the ACK/NACK byte
             if calculated_crc != int.from_bytes(crc_bytes, "big"):
                 print("Received corrupted ACK/NACK")
-                return False
-            if ack_nack != 0xAA: # ACK
-                print(f"Received NACK for message ")
-                return False
+                return -1
+            if ack_nack == 0xAA: # ACK
+                print(f"Received ACK for message {seq}")
+                if seq == local_sec:
+                    return 1
+                else:
+                    return 0
             if seq != local_sec:
                 print(f"Received ACK with wrong sequence number {seq}, expected {local_sec}")
-                return False
+                return -1
+            return -1
             
-            print(f"Received ACK for message {seq}")
-            return True        
-            """print(f"local sequence number {local_sec}")
-            print(f"got sequence number {seq}")"""
+        
 for message in messages:
     crc_val = 0
-    local_sec = (local_sec + 1) % 256  # Increment sequence number and wrap around at 256
     while True:
         message_length = len(message)
         payload = message_length.to_bytes(1, "big") + message + local_sec.to_bytes(1, "big") 
@@ -73,10 +73,21 @@ for message in messages:
         #frame = 1 bytes for message length + message + sequence number + 2 bytes for CRC
         if len(frame) < CHUNK_SIZE:
             frame = frame + b"\x00" * max(0, CHUNK_SIZE - len(frame))
+        while uart.any():
+            uart.read()  
+
+
         uart.write(frame)
-        if receive_and_wait(): 
+
+
+
+        result = receive_and_wait()
+
+
+        if result == 1:
             print(f"Message {local_sec} sent successfully with CRC {crc_val}")
+            local_sec = (local_sec + 1) % 256
             break
         else:
             print(f"Resending message: {message} with sequence number {local_sec} due to NACK or timeout") 
-        time.sleep(1) 
+        time.sleep(0.1)
