@@ -14,7 +14,7 @@ def safe_decode(data):
     try:
         return data.decode('utf-8')
     except Exception:
-        pass
+        return ''.join(chr(b) if 32 <= b <= 126 else '.' for b in data)
 
 while True:
     if uart.any():
