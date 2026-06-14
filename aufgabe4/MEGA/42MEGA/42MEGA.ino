@@ -32,9 +32,9 @@ int probs = 1000;
 
 byte maybe_flip_a_bit(byte a)
 {
-  for( int i = 0; i < 8; i++)
+  for(int i = 0; i < 8; i++)
   {
-    if(random(65536) < 300)
+    if(random(65536) < 33) //ceil(65536 * 0,0005) = 33
     {
       // FLIP IT!
       a ^= (1<<i);
