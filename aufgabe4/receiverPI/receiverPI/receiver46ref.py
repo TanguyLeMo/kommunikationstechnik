@@ -218,10 +218,6 @@ def receive_loop(uart):
         print(message)
 
 
-# =========================
-# Main
-# =========================
-
 uart = UART(
     UART_ID,
     baudrate=BAUDRATE,
