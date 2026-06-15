@@ -71,7 +71,7 @@ void loop() {
   if (Serial.available()) {
 
     int inByte = Serial.read();
-
+    Serial.println(inByte);
     Serial1.write(maybe_flip_a_bit(inByte));
 
   }
