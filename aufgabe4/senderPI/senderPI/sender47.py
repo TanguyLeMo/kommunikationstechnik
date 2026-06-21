@@ -1,4 +1,5 @@
 from machine import UART, Pin  # pyright: ignore[reportMissingImports]
+import sys
 import time
 import network
 import socket
@@ -10,9 +11,8 @@ UART_BAUDRATE = 9600
 UART_TX_PIN = 0
 UART_RX_PIN = 1
 
-WIFI_SSID = "Unischallert"
-WIFI_PASSWORD = "musswirgge"
-
+WIFI_SSID = "stairwaytoheaven"
+WIFI_PASSWORD = "SalimisteinrichtigerMann!!!"
 CONTROL_PORT = 5001
 
 FRAME_SIZE = 16
@@ -25,6 +25,7 @@ ACK_BYTE = 0xAA
 NACK_BYTE = 0x00
 
 CRC4 = "10011"
+CRC6 = "1100001"
 CRC8 = "100000111"
 CRC16 = "10001000000100001"
 
@@ -42,8 +43,6 @@ FRAME_OVERHEAD_BYTES = FRAME_HEADER_BYTES + CRC_BYTES
 MAX_DATA_BYTES = FRAME_SIZE - FRAME_OVERHEAD_BYTES
 
 ACK_FRAME_SIZE = 2 + CRC_BYTES
-
-
 def recalculate_sizes():
     global CRC_BITS
     global CRC_BYTES
@@ -63,7 +62,8 @@ def recalculate_sizes():
 def crc_from_config(value):
     if value == "CRC4":
         return CRC4
-
+    if value == "CRC6":
+        return CRC6
     if value == "CRC8":
         return CRC8
 
@@ -132,7 +132,6 @@ def calc_crc(u, g):
     crc >>= bits2byte
     return crc
 
-
 def create_uart():
     return UART(
         UART_ID,
@@ -144,36 +143,48 @@ def create_uart():
 
 def next_seq(seq):
     return (seq + 1) % 256
+def scan_wifi(wlan):
 
+    time.sleep(2)
+    print(sys.version)
+    print(sys.implementation)
+    for net in wlan.scan():
+        ssid = net[0].decode()
+        channel = net[2]
+        rssi = net[3]
+        security = net[4]
+        hidden = net[5]
+        print(ssid, "channel:", channel, "rssi:", rssi, "security:", security, "hidden:", hidden)
 
 def connect_wifi():
+    
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
+    scan_wifi(wlan)
+    print("Connecting to WiFi...")
+    wlan.connect(WIFI_SSID, WIFI_PASSWORD)
 
-    if not wlan.isconnected():
-        print("Connecting to WiFi...")
-        wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+    for i in range(30):
+        status = wlan.status()
+        print("status:", status, "connected:", wlan.isconnected())
 
-        start = time.ticks_ms()
+        if wlan.isconnected():
+            print("WiFi connected.")
+            print("IP:", wlan.ifconfig()[0])
+            return wlan
 
-        while not wlan.isconnected():
-            if time.ticks_diff(time.ticks_ms(), start) > 20000:
-                raise RuntimeError("WiFi connection timeout")
-            print("isconnected:", wlan.isconnected())
-            print("ifconfig:", wlan.ifconfig())
-            print("status:", wlan.status())
-            time.sleep_ms(250)
+        if status < 0:
+            raise RuntimeError("WiFi failed with status: " + str(status))
 
-    print("WiFi connected.")
-    print("IP:", wlan.ifconfig()[0])
+        time.sleep(1)
 
-    return wlan
+    raise RuntimeError("WiFi timeout. Last status: " + str(wlan.status()))
 
 
 def recv_json_line(conn):
     data = b""
-
     while True:
+
         chunk = conn.recv(1)
 
         if not chunk:

@@ -48,4 +48,4 @@ def receive_and_wait():
                 print("Received corrupted ACK/NACK")
                 return -1
             if ack_nack == 0xAA: # ACK
-                print(f"Received ACK f
+                print(f"Received ACK for message {seq}")
