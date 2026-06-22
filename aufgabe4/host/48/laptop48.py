@@ -7,8 +7,8 @@ from datetime import datetime
 import csv
 import os
 
-DEVICE_A_IP = "192.168.180.86"
-DEVICE_B_IP = "192.168.180.138"
+DEVICE_A_IP = "10.104.181.29"
+DEVICE_B_IP = "10.104.181.45"
 
 PORT_A = 5001
 PORT_B = 5002

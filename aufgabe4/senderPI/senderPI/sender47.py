@@ -11,8 +11,10 @@ UART_BAUDRATE = 9600
 UART_TX_PIN = 0
 UART_RX_PIN = 1
 
-WIFI_SSID = "stairwaytoheaven"
-WIFI_PASSWORD = "SalimisteinrichtigerMann!!!"
+#WIFI_SSID = "stairwaytoheaven"
+#WIFI_PASSWORD = "SalimisteinrichtigerMann!!!"
+WIFI_SSID = "Unischallert "
+WIFI_PASSWORD = "musswirgge"
 CONTROL_PORT = 5001
 
 FRAME_SIZE = 16
@@ -34,7 +36,7 @@ CRC_POLY = CRC16
 FRAME_HEADER_BYTES = 2
 
 MAX_CHUNKS = None
-MAX_RETRIES_PER_FRAME = 500
+MAX_RETRIES_PER_FRAME = 200
 
 CRC_BITS = len(CRC_POLY) - 1
 CRC_BYTES = (CRC_BITS + 7) // 8
