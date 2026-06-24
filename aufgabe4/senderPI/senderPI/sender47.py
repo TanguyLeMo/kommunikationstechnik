@@ -12,7 +12,7 @@ UART_TX_PIN = 0
 UART_RX_PIN = 1
 
 #WIFI_SSID = "stairwaytoheaven"
-#WIFI_PASSWORD = "SalimisteinrichtigerMann!!!"
+#WIFI_PASSWORD = "SalimisteinrichtigerMann!!!" yeah I look stupid now, don't I? Well I also feel very stupid... Anyways, I changed the credentials already, but damn
 WIFI_SSID = "Unischallert "
 WIFI_PASSWORD = "musswirgge"
 CONTROL_PORT = 5001
