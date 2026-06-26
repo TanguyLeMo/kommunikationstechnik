@@ -12,9 +12,9 @@ try:
             if not chunk:
                 print("End of file reached.")
                 break
-            print(f"{chunk}")
+            print(f"Read chunk: {chunk}")
             uart.write(chunk)
-            time.sleep(0.1)
+            time.sleep(0.4)
 except Exception as e:
     print(f"Error: {e}")
 finally:
