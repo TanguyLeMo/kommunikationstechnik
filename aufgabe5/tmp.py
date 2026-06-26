@@ -127,6 +127,208 @@ def plot_ber_study():
     plt.tight_layout()
     plt.show()
 
+
+def simulate_symbol_level_once(mod_scheme, snr_db, k=200000):
+    """Simuliert eine reine Symbolkanal-Uebertragung.
+
+    Ablauf:
+    Bits -> Modulationssymbole -> komplexes AWGN -> Demodulation -> BER
+
+    Auf Symbolebene werden bewusst kein Pulse Shaping, keine Traegermodulation
+    und kein Tiefpass verwendet.
+    """
+    m = bits_per_symbol(mod_scheme)
+    if k % m != 0:
+        k = k - (k % m)
+
+    tx_bits = np.random.randint(0, 2, k)
+    tx_symbols = bit2symbol(tx_bits, mod_scheme)
+
+    rx_symbols = add_awgn_noise_complex(tx_symbols, snr_db)
+
+    rx_bits = symbol2bit(rx_symbols, mod_scheme)
+    decided_symbols = bit2symbol(rx_bits, mod_scheme)
+
+    ber = bit_error_probability(tx_bits, rx_bits)
+
+    return {
+        "tx_bits": tx_bits,
+        "rx_bits": rx_bits,
+        "tx_symbols": tx_symbols,
+        "rx_symbols": rx_symbols,
+        "decided_symbols": decided_symbols,
+        "ber": ber,
+    }
+
+
+def constellation_points(mod_scheme, tx_symbols):
+    """Liefert die idealen Konstellationspunkte."""
+    if hasattr(mod_scheme, "constellation"):
+        return np.asarray(mod_scheme.constellation)
+
+    # Fallback, falls komm das Attribut bei einer Modulation nicht anbietet.
+    return np.unique(np.round(tx_symbols, 12))
+
+
+def plot_one_symbol_constellation(
+    ax,
+    name,
+    mod_scheme,
+    snr_db,
+    tx_symbols,
+    rx_symbols,
+    ber,
+    max_points=3000,
+):
+    """Plottet ideale und verrauschte Symbole in ein Achsenobjekt."""
+    ideal = constellation_points(mod_scheme, tx_symbols)
+
+    if len(rx_symbols) > max_points:
+        idx = np.random.choice(len(rx_symbols), max_points, replace=False)
+        rx_plot = rx_symbols[idx]
+    else:
+        rx_plot = rx_symbols
+
+    ax.scatter(
+        np.real(rx_plot),
+        np.imag(rx_plot),
+        s=5,
+        alpha=0.25,
+        label="verrauschte Punkte",
+    )
+
+    ax.scatter(
+        np.real(ideal),
+        np.imag(ideal),
+        s=90,
+        marker="x",
+        linewidths=2,
+        label="ideale Symbole",
+    )
+
+    all_points = np.concatenate([ideal, rx_plot])
+    max_abs = np.max(
+        [
+            np.max(np.abs(np.real(all_points))),
+            np.max(np.abs(np.imag(all_points))),
+            1.0,
+        ]
+    )
+    limit = 1.2 * max_abs
+
+    ax.set_xlim(-limit, limit)
+    ax.set_ylim(-limit, limit)
+    ax.set_aspect("equal", adjustable="box")
+
+    ax.axhline(0, linewidth=0.5)
+    ax.axvline(0, linewidth=0.5)
+    ax.grid(True)
+
+    ax.set_title(f"{name}, SNR = {snr_db} dB\nBER = {ber:.3e}")
+    ax.set_xlabel("I")
+    ax.set_ylabel("Q")
+
+
+def plot_symbol_level_constellation_study(k=200000,snr_values=(20, 10, 5, 0), max_points=3000,):
+    """Erzeugt Konstellationsdiagramme und gibt die BER-Tabelle aus."""
+    modulation_schemes = {
+        "BPSK": PSKModulation(2),
+        "QPSK": PSKModulation(4),
+        "16QAM": QAModulation(16),
+        "64QAM": QAModulation(64),
+    }
+
+    np.random.seed(1)
+
+    fig, axes = plt.subplots(
+        len(modulation_schemes),
+        len(snr_values),
+        figsize=(4 * len(snr_values), 4 * len(modulation_schemes)),
+        squeeze=False,
+    )
+
+    ber_results = {}
+
+    for row, (name, mod_scheme) in enumerate(modulation_schemes.items()):
+        ber_results[name] = {}
+
+        for col, snr_db in enumerate(snr_values):
+            result = simulate_symbol_level_once(mod_scheme, snr_db, k=k)
+            ber_results[name][snr_db] = result["ber"]
+
+            plot_one_symbol_constellation(
+                axes[row][col],
+                name,
+                mod_scheme,
+                snr_db,
+                result["tx_symbols"],
+                result["rx_symbols"],
+                result["ber"],
+                max_points=max_points,
+            )
+
+    handles, labels = axes[0][0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", ncol=2)
+    fig.suptitle("Symbol-Level Studie: Konstellationsdiagramme mit AWGN", y=0.995)
+    fig.tight_layout(rect=[0, 0, 1, 0.97])
+    plt.show()
+
+    print_ber_table(ber_results, snr_values)
+    return ber_results
+
+
+def print_ber_table(ber_results, snr_values):
+    """Gibt die BER-Werte sauber als Tabelle in der Konsole aus."""
+    header = "Modulation".ljust(12)
+    for snr_db in snr_values:
+        header += f"{snr_db:>12} dB"
+    print(header)
+
+    for name, values in ber_results.items():
+        row = name.ljust(12)
+        for snr_db in snr_values:
+            row += f"{values[snr_db]:12.3e}\t"
+        print(row)
+
+
+def plot_symbol_level_ber_curve(
+    k=200000,
+    snr_values=np.arange(-4, 31, 2),
+):
+    """Zusatzplot: BER-Verlauf ueber viele SNR-Werte."""
+    modulation_schemes = {
+        "BPSK": PSKModulation(2),
+        "QPSK": PSKModulation(4),
+        "16QAM": QAModulation(16),
+        "64QAM": QAModulation(64),
+    }
+
+    np.random.seed(2)
+
+    plt.figure(figsize=(10, 6))
+
+    for name, mod_scheme in modulation_schemes.items():
+        ber_values = []
+
+        for snr_db in snr_values:
+            result = simulate_symbol_level_once(mod_scheme, snr_db, k=k)
+            ber_values.append(result["ber"])
+
+        ber_values = np.asarray(ber_values)
+        ber_values_for_plot = np.maximum(ber_values, 1 / k)
+
+        plt.semilogy(snr_values, ber_values_for_plot, marker="o", label=name)
+
+    plt.xlabel("SNR [dB]")
+    plt.ylabel("Bitfehlerwahrscheinlichkeit")
+    plt.title("Bitfehlerwahrscheinlichkeit auf Symbolebene")
+    plt.grid(True, which="both")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+
 def plot_bandpass_spectrum(fb_signal, fs, noisy_fb_signal=None):
     frequencies = np.fft.fftfreq(len(fb_signal), d=1 / fs)
 
@@ -389,6 +591,12 @@ def main():
 
 if __name__ == "__main__":
 
-    #main()
-    plot_frequency_snr_study()
-    plot_ber_study()
+    # Fuer diese Teilaufgabe:
+    plot_symbol_level_constellation_study()
+    plot_symbol_level_ber_curve()
+
+    # Fuer eure vorherige Frequenzbereichsaufgabe bei wenigen Symbolen:
+    # plot_frequency_snr_study()
+
+    # Fuer den alten BER-Plot:
+    # plot_ber_study()
