@@ -1,48 +1,7 @@
 from math import log2, pi, sqrt
 
 import numpy as np
-
-try:
-    from komm import PSKModulation, QAMModulation, RectangularPulse, TransmitFilter
-except ImportError:
-    class PSKModulation:
-        def __init__(self, order):
-            self.order = order
-            self.bits_per_symbol = int(log2(order))
-            self.constellation = np.exp(1j * 2 * pi * np.arange(order) / order)
-
-        def modulate(self, bits):
-            return _modulate_by_index(bits, self.bits_per_symbol, self.constellation)
-
-        def demodulate(self, symbols):
-            return _demodulate_by_distance(symbols, self.bits_per_symbol, self.constellation)
-
-    class QAMModulation:
-        def __init__(self, order):
-            self.order = order
-            self.bits_per_symbol = int(log2(order))
-            side = int(sqrt(order))
-            levels = np.arange(-(side - 1), side, 2)
-            grid = [i + 1j * q for q in levels[::-1] for i in levels]
-            self.constellation = np.array(grid) / sqrt(np.mean(np.abs(grid) ** 2))
-
-        def modulate(self, bits):
-            return _modulate_by_index(bits, self.bits_per_symbol, self.constellation)
-
-        def demodulate(self, symbols):
-            return _demodulate_by_distance(symbols, self.bits_per_symbol, self.constellation)
-
-    class RectangularPulse:
-        pass
-
-    class TransmitFilter:
-        def __init__(self, pulse, samples_per_symbol):
-            self.samples_per_symbol = samples_per_symbol
-
-        def __call__(self, symbols):
-            return np.repeat(symbols, self.samples_per_symbol)
-
-
+from komm import PSKModulation, RectangularPulse, TransmitFilter
 def _modulate_by_index(bits, bits_per_symbol, constellation):
     bit_sequence = np.asarray(bits, dtype=int)
     if len(bit_sequence) % bits_per_symbol != 0:
@@ -131,7 +90,6 @@ def integrate_and_dump(bb_signal, nsamp):
 def symbol2bit(symbol_sequence, mod_scheme):
     return mod_scheme.demodulate(np.asarray(symbol_sequence))
 
-
 def main():
     k = 10
     rb = 2
@@ -140,9 +98,8 @@ def main():
     mod_scheme = PSKModulation(4)
     pulse = RectangularPulse()
     bit_sequence = np.array([1, 0, 1, 1, 0, 0, 0, 1, 1, 0])
-
     params = derived_parameters(k, rb, fs, mod_scheme)
-    symbol_sequence = bit2symbol(bit_sequence, mod_scheme)
+    symbol_sequence = bit2symbol(bit_sequence, mod_scheme) # gib complexe Symbole zurück
     bb_signal = pulse_shaping(symbol_sequence, pulse, params["ns"])
     fb_signal = amplitude_modulation(bb_signal, fc, fs)
     recovered_bb_signal = amplitude_demodulation(fb_signal, fc, fs)
