@@ -1,64 +1,7 @@
-from math import log2, pi, sqrt
+from math import log2, pi
 
 import numpy as np
-
-try:
-    from komm import PSKModulation, QAMModulation, RectangularPulse, TransmitFilter
-except ImportError:
-    class PSKModulation:
-        def __init__(self, order):
-            self.order = order
-            self.bits_per_symbol = int(log2(order))
-            self.constellation = np.exp(1j * 2 * pi * np.arange(order) / order)
-
-        def modulate(self, bits):
-            return _modulate_by_index(bits, self.bits_per_symbol, self.constellation)
-
-        def demodulate(self, symbols):
-            return _demodulate_by_distance(symbols, self.bits_per_symbol, self.constellation)
-
-    class QAMModulation:
-        def __init__(self, order):
-            self.order = order
-            self.bits_per_symbol = int(log2(order))
-            side = int(sqrt(order))
-            levels = np.arange(-(side - 1), side, 2)
-            grid = [i + 1j * q for q in levels[::-1] for i in levels]
-            self.constellation = np.array(grid) / sqrt(np.mean(np.abs(grid) ** 2))
-
-        def modulate(self, bits):
-            return _modulate_by_index(bits, self.bits_per_symbol, self.constellation)
-
-        def demodulate(self, symbols):
-            return _demodulate_by_distance(symbols, self.bits_per_symbol, self.constellation)
-
-    class RectangularPulse:
-        pass
-
-    class TransmitFilter:
-        def __init__(self, pulse, samples_per_symbol):
-            self.samples_per_symbol = samples_per_symbol
-
-        def __call__(self, symbols):
-            return np.repeat(symbols, self.samples_per_symbol)
-
-
-def _modulate_by_index(bits, bits_per_symbol, constellation):
-    bit_sequence = np.asarray(bits, dtype=int)
-    if len(bit_sequence) % bits_per_symbol != 0:
-        raise ValueError("Die Bitanzahl muss durch die Bits pro Symbol teilbar sein.")
-
-    groups = bit_sequence.reshape(-1, bits_per_symbol)
-    weights = 2 ** np.arange(bits_per_symbol - 1, -1, -1)
-    indexes = groups @ weights
-    return constellation[indexes]
-
-
-def _demodulate_by_distance(symbols, bits_per_symbol, constellation):
-    distances = np.abs(np.asarray(symbols)[:, None] - constellation[None, :])
-    indexes = np.argmin(distances, axis=1)
-    shifts = np.arange(bits_per_symbol - 1, -1, -1)
-    return ((indexes[:, None] >> shifts) & 1).reshape(-1)
+from komm import PSKModulation, RectangularPulse, TransmitFilter
 
 
 def bits_per_symbol(mod_scheme):
@@ -96,7 +39,10 @@ def bit2symbol(bit_sequence, mod_scheme):
 
 def pulse_shaping(symbol_sequence, pulse, nsamp):
     transmit_filter = TransmitFilter(pulse, nsamp)
-    return transmit_filter(np.asarray(symbol_sequence)) / nsamp
+    symbols = np.asarray(symbol_sequence)
+    i_signal = transmit_filter(np.real(symbols))
+    q_signal = transmit_filter(np.imag(symbols))
+    return (i_signal + 1j * q_signal) / nsamp
 
 
 def amplitude_modulation(bb_signal, fc, fs):
