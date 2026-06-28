@@ -396,18 +396,16 @@ def plot_konstellations_diagramm(original_symbols, recovered_symbols, noisy_symb
     plt.show()
 
 
-def demo_end_to_end() -> None:
+def one_four(k = 40,snr_db = 0) -> None:
     """Small end-to-end demo from the original main function."""
-    k = 10
     rb = 2
     fc = 4
     fs = 64
-    snr_db = 20
+
 
     mod_scheme = PSKModulation(4)
     pulse = RectangularPulse()
-    bit_sequence = np.array([1, 0, 1, 1, 0, 0, 0, 1, 1, 0])
-
+    bit_sequence = np.random.randint(0, 2, k)
     params = derived_parameters(k, rb, fs, mod_scheme)
     symbol_sequence = bit2symbol(bit_sequence, mod_scheme)
     bb_signal = pulse_shaping(symbol_sequence, pulse, params["ns"])
@@ -417,31 +415,8 @@ def demo_end_to_end() -> None:
     recovered_symbol_sequence = integrate_and_dump(recovered_bb_signal, params["ns"])
     recovered_bit_sequence = symbol2bit(recovered_symbol_sequence, mod_scheme)
 
-    print("Aufgabe 1.1 - Parameter")
-    print(f"m  = {params['m']} bit/Symbol")
-    print(f"s  = {params['s']} Symbole")
-    print(f"rs = {params['rs']} Symbole/s")
-    print(f"Ts = {params['Ts']} s")
-    print(f"ns = {params['ns']} Samples/Symbol")
-    print()
-    print("Aufgabe 1.2 - Sender")
-    print("Bits:", bit_sequence)
-    print("Symbole:", np.round(symbol_sequence, 3))
-    print("Basisbandsignal, erste 12 Samples:", np.round(bb_signal[:12], 3))
-    print("Bandpasssignal, erste 12 Samples:", np.round(fb_signal[:12], 3))
-    print()
-    print("Aufgabe 1.3 - Empfaenger")
-    print(
-        "Demoduliertes Basisbandsignal, erste 12 Samples:",
-        np.round(recovered_bb_signal[:12], 3),
-    )
-    print("Wiedergewonnene Symbole:", np.round(recovered_symbol_sequence, 3))
-    print("Wiedergewonnene Bits:", recovered_bit_sequence)
-    print("Bitfolgen identisch:", np.array_equal(bit_sequence, recovered_bit_sequence))
-
     plot_konstellations_diagramm(symbol_sequence, recovered_symbol_sequence)
     plot_baseband_signals(bb_signal, recovered_bb_signal)
-    plot_bandpass_signals(fb_signal, noisy_fb_signal)
     plot_bandpass_spectrum(fb_signal, fs, noisy_fb_signal=noisy_fb_signal)
 
     ber = bit_error_probability(bit_sequence, recovered_bit_sequence)
@@ -453,11 +428,11 @@ if __name__ == "__main__":
 
 
     # For the previous frequency-domain task with few symbols:
+    one_four()
     plot_symbol_level_constellation_study()
     plot_frequency_snr_study()
     plot_symbol_level_ber_curve(k=200000)
     # For the small original end-to-end demo:
-    #demo_end_to_end()
 
     # For the old BER plot:
     # plot_ber_study()
